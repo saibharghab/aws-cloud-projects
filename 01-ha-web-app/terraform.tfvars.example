@@ -1,0 +1,6 @@
+# Copy to terraform.tfvars and fill in.
+alert_email = "you@example.com"
+
+# Set to false while you are building to roughly halve the database cost,
+# then switch to true for the final demo and screenshots.
+db_multi_az = false

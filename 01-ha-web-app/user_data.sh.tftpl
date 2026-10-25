@@ -1,0 +1,32 @@
+#!/bin/bash
+# Runs once when each EC2 instance boots. Installs the Flask app as a service.
+set -euxo pipefail
+
+dnf install -y python3-pip
+pip3 install flask pymysql boto3 gunicorn
+
+mkdir -p /opt/app
+cat > /opt/app/app.py <<'PYEOF'
+${app_py}
+PYEOF
+
+cat > /etc/systemd/system/webapp.service <<EOF
+[Unit]
+Description=Flask web app
+After=network-online.target
+
+[Service]
+Environment=DB_HOST=${db_host}
+Environment=DB_NAME=${db_name}
+Environment=DB_SECRET_ARN=${secret_arn}
+Environment=AWS_REGION=${region}
+WorkingDirectory=/opt/app
+ExecStart=/usr/local/bin/gunicorn --workers 2 --bind 0.0.0.0:8080 app:app
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reload
+systemctl enable --now webapp
